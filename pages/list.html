@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>列表 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script src="../data/catalog.js"></script>
+  <script src="../data/extra.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    (function () {
+      const p = App.qs().get('platform') || App.getPlatform();
+      App.setPlatform(p);
+      App.applyAccent(p);
+      let mode = App.qs().get('mode') || 'interview';
+      if (!['knowledge', 'interview', 'mastered'].includes(mode)) mode = 'interview';
+
+      const titles = { knowledge: '知识点', interview: '面试题', mastered: '已掌握' };
+      const data = App.platformData(p);
+      let search = '';
+      const openCats = {};
+
+      function sourceList() {
+        if (mode === 'knowledge') return data.knowledge.slice();
+        if (mode === 'interview') return data.interviews.slice();
+        return [...data.knowledge, ...data.interviews].filter((it) => Store.has(it));
+      }
+
+      function visible() {
+        let list = sourceList();
+        if (mode !== 'mastered') list = list.filter((it) => !Store.has(it));
+        const q = search.trim().toLowerCase();
+        if (q) {
+          list = list.filter(
+            (it) =>
+              it.question.toLowerCase().includes(q) ||
+              it.category.toLowerCase().includes(q) ||
+              (it.answer || '').toLowerCase().includes(q),
+          );
+        }
+        return list;
+      }
+
+      function render() {
+        const list = visible();
+        const grouped = App.groupByCat(list);
+        const cats = [...grouped.keys()];
+        let body = '';
+        if (!list.length) {
+          body = '<div class="empty">暂无题目<br>试试换关键词，或去首页看看</div>';
+        } else {
+          cats.forEach((cat, idx) => {
+            const key = cat;
+            const isOpen = openCats[key] ?? idx === 0;
+            const items = grouped.get(cat);
+            body += `<div class="cat ${isOpen ? 'open' : ''}">
+              <button class="cat-h" type="button" data-cat="${App.esc(key)}">
+                <span class="arrow">›</span>${App.esc(cat)}
+                <span class="count">${items.length}</span>
+              </button>
+              <div class="cat-b">
+                ${items
+                  .map((it) => {
+                    const href =
+                      'detail.html?platform=' +
+                      p +
+                      '&mode=' +
+                      mode +
+                      '&id=' +
+                      encodeURIComponent(Store.idOf(it));
+                    return `<a class="q-item" href="${href}">
+                  <span class="badge ${it.kind === 'knowledge' ? 'know' : ''}">${
+                      it.kind === 'knowledge' ? '知' : '题'
+                    }</span>
+                  <span>${App.esc(it.question)}</span>
+                </a>`;
+                  })
+                  .join('')}
+              </div>
+            </div>`;
+          });
+        }
+
+        document.getElementById('app').innerHTML = `
+          ${App.topbar(
+            App.LABELS[p] + ' · ' + titles[mode],
+            '../index.html?platform=' + p,
+            '第 ' + (mode === 'knowledge' ? '1' : mode === 'interview' ? '2' : '3') + ' 条',
+          )}
+          <main class="main">
+            <input class="search" id="search" placeholder="搜索题目 / 分类 / 答案" value="${App.esc(search)}">
+            <p class="stat">显示 ${list.length} 条</p>
+            ${body}
+            ${
+              mode === 'mastered' && list.length
+                ? '<button class="btn danger" type="button" id="restoreAll" style="width:100%;margin-top:8px">全部恢复为未掌握</button>'
+                : ''
+            }
+          </main>
+          ${App.renderTabbar(p, '../')}
+        `;
+
+        const input = document.getElementById('search');
+        input.addEventListener('input', (e) => {
+          search = e.target.value;
+          const pos = e.target.selectionStart;
+          render();
+          const s2 = document.getElementById('search');
+          if (s2) {
+            s2.focus();
+            s2.setSelectionRange(pos, pos);
+          }
+        });
+
+        document.querySelectorAll('.cat-h').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const key = btn.dataset.cat;
+            const catEl = btn.closest('.cat');
+            openCats[key] = !catEl.classList.contains('open');
+            render();
+          });
+        });
+
+        const restore = document.getElementById('restoreAll');
+        if (restore) {
+          restore.addEventListener('click', () => {
+            for (const it of list) Store.remove(it);
+            App.toast('已全部恢复');
+            render();
+          });
+        }
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

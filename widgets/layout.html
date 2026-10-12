@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>布局控件 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script src="../js/store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const p = App.qs().get('platform') || 'web';
+    App.applyAccent(p);
+    document.getElementById('app').innerHTML = `
+      ${App.topbar('布局专页', '../pages/widgets.html?platform=' + p, 'Flex / Grid / 安全区')}
+      <main class="main">
+        <section class="w-card">
+          <h3>Flex</h3>
+          <p class="desc">主轴横向，子项均分。</p>
+          <div class="demo-box"><div class="flex-demo"><div>左</div><div>中</div><div>右</div></div></div>
+          <pre class="demo-code">display: flex; gap: 8px;
+子项 flex: 1;</pre>
+        </section>
+        <section class="w-card">
+          <h3>Grid</h3>
+          <p class="desc">两列宫格，适合入口。</p>
+          <div class="demo-box"><div class="grid-demo"><div>A</div><div>B</div><div>C</div><div>D</div></div></div>
+          <pre class="demo-code">display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 8px;</pre>
+        </section>
+        <section class="w-card">
+          <h3>底部安全区</h3>
+          <p class="desc">刘海屏 / Home 条：padding-bottom: env(safe-area-inset-bottom)</p>
+          <div class="demo-box" style="padding-bottom:calc(12px + env(safe-area-inset-bottom, 0px));background:#ecfdf5">
+            底栏示意（已加 safe-area）
+          </div>
+          <pre class="demo-code">padding-bottom: calc(12px + env(safe-area-inset-bottom));
+/* html viewport-fit=cover */</pre>
+        </section>
+      </main>
+      ${App.renderTabbar(p, '../')}
+    `;
+  </script>
+</body>
+</html>

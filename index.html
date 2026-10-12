@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>面试题库 · H5_Faces</title>
+  <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script src="data/catalog.js"></script>
+  <script src="data/extra.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    (function () {
+      const p = App.getPlatform();
+      App.setPlatform(p);
+      App.applyAccent(p);
+      const data = App.platformData(p);
+      const c = App.counts(p);
+      const chips = App.CHIPS[p];
+
+      document.getElementById('app').innerHTML = `
+        ${App.topbar(data.label + ' 学习站', null, '知识点 · 面试题 · 已掌握 · 控件')}
+        <main class="main">
+          <div class="carousel">
+            ${chips.map((name, i) =>
+              `<div class="chip" style="opacity:${1 - i * 0.1}">${App.esc(name)}</div>`
+            ).join('')}
+          </div>
+
+          <div class="banner-list">
+            <a class="banner" style="background:var(--know)" href="pages/list.html?platform=${p}&mode=knowledge">
+              <div class="idx">第 1 条</div>
+              <div class="t">知识点</div>
+              <div class="s">入门概念 · 未掌握 ${c.knowledge} / 共 ${c.knowledgeTotal}</div>
+            </a>
+            <a class="banner" style="background:var(--accent)" href="pages/list.html?platform=${p}&mode=interview">
+              <div class="idx">第 2 条</div>
+              <div class="t">面试题</div>
+              <div class="s">未掌握 ${c.interview} / 共 ${c.interviewTotal}</div>
+            </a>
+            <a class="banner" style="background:var(--mastered)" href="pages/list.html?platform=${p}&mode=mastered">
+              <div class="idx">第 3 条</div>
+              <div class="t">已掌握的面试题</div>
+              <div class="s">可恢复 · 当前 ${c.mastered} 题</div>
+            </a>
+            <a class="banner" style="background:var(--widget)" href="pages/widgets.html?platform=${p}">
+              <div class="idx">第 4 条</div>
+              <div class="t">控件集合</div>
+              <div class="s">${p === 'flutter' ? 'Flutter Widget' : p === 'ios' ? 'UIKit / SwiftUI' : 'H5 控件'} · 列表 → 代码+示例</div>
+            </a>
+          </div>
+
+          <p class="stat">当前端：${App.esc(data.label)}（已去掉安卓）。部署到 GitHub Pages 后手机打开本站即可刷题。</p>
+          <p class="stat">「已掌握」保存在本机浏览器；换设备需重新标记。</p>
+        </main>
+        ${App.renderTabbar(p, '')}
+      `;
+    })();
+  </script>
+</body>
+</html>

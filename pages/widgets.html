@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>控件集合 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"><main class="main"><p class="stat">加载中…</p></main></div>
+  <!-- 控件页不依赖面试题库，避免题库脚本异常导致整页空白 -->
+  <script>
+    function __scriptFail(name) {
+      var el = document.getElementById('app');
+      if (el) {
+        el.innerHTML =
+          '<main class="main"><div class="empty">脚本加载失败：' +
+          name +
+          '</div><p class="stat"><a href="../index.html">返回首页</a></p></main>';
+      }
+    }
+  </script>
+  <script src="../js/store.js" onerror="__scriptFail('js/store.js')"></script>
+  <script src="../js/common.js" onerror="__scriptFail('js/common.js')"></script>
+  <script src="../widgets/catalog.js" onerror="__scriptFail('widgets/catalog.js')"></script>
+  <script src="../widgets/render.js" onerror="__scriptFail('widgets/render.js')"></script>
+  <script>
+    (function () {
+      try {
+        if (!window.App) throw new Error('App 未初始化（common.js）');
+        const raw = App.qs().get('platform');
+        if (raw) App.setPlatform(raw);
+        const p = App.getPlatform();
+        App.applyAccent(p);
+
+        if (!window.WIDGETS) {
+          throw new Error('未加载 widgets/catalog.js');
+        }
+        if (!window.WidgetUI) {
+          throw new Error('未加载 widgets/render.js');
+        }
+
+        const all = Array.isArray(window.WIDGETS[p]) ? window.WIDGETS[p] : [];
+        if (!all.length) {
+          throw new Error(
+            '平台「' + p + '」控件数据为空（keys: ' + Object.keys(window.WIDGETS).join(',') + '）',
+          );
+        }
+        const cats = ['全部'].concat(
+          Array.from(new Set(all.map((w) => w.category).filter(Boolean))),
+        );
+        let filter = '全部';
+        let search = '';
+
+        const tips = {
+          flutter: 'Flutter Widget（如 GridView、ListView）· 点进查看 Dart 代码与示意 UI',
+          web: 'H5 / Web 控件与布局 · 点进查看 HTML/CSS/JS 与可交互演示',
+          ios: 'UIKit / SwiftUI 控件 · 点进查看 Swift 代码与示意 UI',
+        };
+        const label = App.LABELS[p] || p;
+
+        function visible() {
+          let list = all.slice();
+          if (filter !== '全部') list = list.filter((w) => w.category === filter);
+          const q = search.trim().toLowerCase();
+          if (q) {
+            list = list.filter(
+              (w) =>
+                w.title.toLowerCase().includes(q) ||
+                w.subtitle.toLowerCase().includes(q) ||
+                w.category.toLowerCase().includes(q),
+            );
+          }
+          return list;
+        }
+
+        function render() {
+          const list = visible();
+          document.getElementById('app').innerHTML = `
+            ${App.topbar(label + ' · 控件集合', '../index.html?platform=' + encodeURIComponent(p), '第 4 条')}
+            <main class="main">
+              <p class="stat">${tips[p] || ''}</p>
+              <input class="search" id="search" placeholder="搜索控件名" value="${App.esc(search)}">
+              <div class="w-filter">
+                ${cats
+                  .map(
+                    (c) =>
+                      `<button type="button" class="${c === filter ? 'on' : ''}" data-cat="${App.esc(c)}">${App.esc(c)}</button>`,
+                  )
+                  .join('')}
+              </div>
+              <p class="stat">共 ${list.length} 个</p>
+              <div id="list"></div>
+            </main>
+            ${App.renderTabbar(p, '../')}
+          `;
+
+          const box = document.getElementById('list');
+          if (!list.length) {
+            box.innerHTML =
+              '<div class="empty">没有匹配的控件<br>当前平台：' +
+              App.esc(p) +
+              ' · 数据 ' +
+              (window.WIDGETS[p] ? window.WIDGETS[p].length : 0) +
+              ' 条</div>';
+          } else {
+            box.innerHTML = list
+              .map(
+                (w) => `<a class="w-item" href="widget_detail.html?platform=${encodeURIComponent(p)}&id=${encodeURIComponent(w.id)}">
+                <div class="w-thumb">${WidgetUI.thumbHtml(w.thumb || 'box')}</div>
+                <div class="w-meta">
+                  <div class="name">${App.esc(w.title)}</div>
+                  <div class="sub">${App.esc(w.subtitle)}</div>
+                  <span class="cat">${App.esc(w.category)}</span>
+                </div>
+                <div class="w-arrow">›</div>
+              </a>`,
+              )
+              .join('');
+          }
+
+          const input = document.getElementById('search');
+          input.addEventListener('input', (e) => {
+            search = e.target.value;
+            const pos = e.target.selectionStart;
+            render();
+            const s2 = document.getElementById('search');
+            if (s2) {
+              s2.focus();
+              s2.setSelectionRange(pos, pos);
+            }
+          });
+
+          document.querySelectorAll('.w-filter button').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              filter = btn.dataset.cat;
+              render();
+            });
+          });
+        }
+
+        render();
+      } catch (err) {
+        document.getElementById('app').innerHTML =
+          '<main class="main"><div class="empty">控件页加载失败</div><pre class="demo-code" style="white-space:pre-wrap">' +
+          String(err && err.stack ? err.stack : err) +
+          '</pre><p class="stat"><a href="../index.html">返回首页</a></p></main>';
+      }
+    })();
+  </script>
+</body>
+</html>

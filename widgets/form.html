@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>表单控件 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script src="../js/store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const p = App.qs().get('platform') || 'web';
+    App.applyAccent(p);
+    document.getElementById('app').innerHTML = `
+      ${App.topbar('表单专页', '../pages/widgets.html?platform=' + p, 'Input / Select / 校验示意')}
+      <main class="main">
+        <section class="w-card">
+          <h3>提币表单示意</h3>
+          <p class="desc">演示必填校验与禁用提交。</p>
+          <div class="demo-box">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <input class="ui-input" id="addr" placeholder="提币地址">
+              <input class="ui-input" id="amt" type="number" placeholder="金额">
+              <select class="ui-select" id="chain">
+                <option>ERC20</option><option>TRC20</option>
+              </select>
+              <button class="ui-btn" type="button" id="submit">提交</button>
+              <div id="err" style="font-size:12px;color:#b91c1c"></div>
+            </div>
+          </div>
+          <pre class="demo-code">if (!addr || !amt) { showError('请填写完整'); return }
+btn.disabled = true
+// await api.withdraw(...)</pre>
+        </section>
+      </main>
+      ${App.renderTabbar(p, '../')}
+    `;
+    document.getElementById('submit').onclick = () => {
+      const addr = document.getElementById('addr').value.trim();
+      const amt = document.getElementById('amt').value;
+      const err = document.getElementById('err');
+      if (!addr || !amt) {
+        err.textContent = '请填写地址和金额';
+        return;
+      }
+      err.textContent = '';
+      App.toast('校验通过（演示）· ' + document.getElementById('chain').value);
+    };
+  </script>
+</body>
+</html>

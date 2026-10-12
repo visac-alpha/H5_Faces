@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>反馈控件 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <div class="modal-mask" id="mask">
+    <div class="modal">
+      <h4>确认提币？</h4>
+      <p>金额与地址请再次核对。演示弹窗，不会真实提交。</p>
+      <div class="actions">
+        <button class="btn ghost" type="button" id="cancel">取消</button>
+        <button class="btn primary" type="button" id="ok">确认</button>
+      </div>
+    </div>
+  </div>
+  <script src="../js/store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    const p = App.qs().get('platform') || 'web';
+    App.applyAccent(p);
+    document.getElementById('app').innerHTML = `
+      ${App.topbar('反馈专页', '../pages/widgets.html?platform=' + p, 'Toast / Modal / Loading')}
+      <main class="main">
+        <section class="w-card">
+          <h3>Toast + Modal</h3>
+          <p class="desc">轻提示不打断；确认操作用弹窗。</p>
+          <div class="demo-box row">
+            <button class="ui-btn" type="button" id="t1">Toast</button>
+            <button class="ui-btn outline" type="button" id="m1">Modal 确认</button>
+          </div>
+          <pre class="demo-code">toast('保存成功')
+openModal() // 高风险操作二次确认</pre>
+        </section>
+        <section class="w-card">
+          <h3>Loading 按钮</h3>
+          <div class="demo-box">
+            <button class="ui-btn" type="button" id="loadBtn">模拟提交</button>
+          </div>
+          <pre class="demo-code">btn.disabled = true
+btn.textContent = '提交中…'
+await api()
+btn.disabled = false</pre>
+        </section>
+      </main>
+      ${App.renderTabbar(p, '../')}
+    `;
+    const mask = document.getElementById('mask');
+    document.getElementById('t1').onclick = () => App.toast('操作成功');
+    document.getElementById('m1').onclick = () => mask.classList.add('show');
+    document.getElementById('cancel').onclick = () => mask.classList.remove('show');
+    document.getElementById('ok').onclick = () => {
+      mask.classList.remove('show');
+      App.toast('已确认');
+    };
+    mask.onclick = (e) => {
+      if (e.target === mask) mask.classList.remove('show');
+    };
+    document.getElementById('loadBtn').onclick = async function () {
+      const btn = this;
+      btn.disabled = true;
+      const old = btn.textContent;
+      btn.textContent = '提交中…';
+      await new Promise((r) => setTimeout(r, 1200));
+      btn.disabled = false;
+      btn.textContent = old;
+      App.toast('完成');
+    };
+  </script>
+</body>
+</html>

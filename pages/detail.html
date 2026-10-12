@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>详情 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script src="../data/catalog.js"></script>
+  <script src="../data/extra.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/common.js"></script>
+  <script>
+    (function () {
+      const p = App.qs().get('platform') || App.getPlatform();
+      const mode = App.qs().get('mode') || 'interview';
+      const id = decodeURIComponent(App.qs().get('id') || '');
+      App.setPlatform(p);
+      App.applyAccent(p);
+      const data = App.platformData(p);
+      const all = [...data.knowledge, ...data.interviews];
+      const item = all.find((it) => Store.idOf(it) === id);
+
+      const back = `list.html?platform=${p}&mode=${mode}`;
+
+      if (!item) {
+        document.getElementById('app').innerHTML = `
+          ${App.topbar('未找到题目', back)}
+          <main class="main"><div class="empty">题目不存在或链接失效</div></main>
+          ${App.renderTabbar(p, '../')}
+        `;
+        return;
+      }
+
+      function render() {
+        const mastered = Store.has(item);
+        document.getElementById('app').innerHTML = `
+          ${App.topbar('题目详情', back)}
+          <main class="main">
+            <div class="detail-q">${App.esc(item.question)}</div>
+            <div class="meta">
+              <span class="pill">${App.esc(item.category)}</span>
+              <span class="pill">${item.kind === 'knowledge' ? '知识点' : '面试题'}</span>
+              <span class="pill">${App.esc(App.LABELS[p])}</span>
+            </div>
+            <div class="answer">${App.esc(item.answer)}</div>
+            ${item.code ? `<pre class="code">${App.esc(item.code)}</pre>` : ''}
+            <div class="actions">
+              ${
+                mastered
+                  ? '<button class="btn ghost" type="button" id="unmaster">恢复为未掌握</button>'
+                  : '<button class="btn primary" type="button" id="master">标记已掌握</button>'
+              }
+              <button class="btn ghost" type="button" id="copy">复制答法</button>
+            </div>
+          </main>
+          ${App.renderTabbar(p, '../')}
+        `;
+
+        const masterBtn = document.getElementById('master');
+        const unmasterBtn = document.getElementById('unmaster');
+        if (masterBtn) {
+          masterBtn.addEventListener('click', () => {
+            Store.add(item);
+            App.toast('已标记掌握');
+            location.href = back;
+          });
+        }
+        if (unmasterBtn) {
+          unmasterBtn.addEventListener('click', () => {
+            Store.remove(item);
+            App.toast('已恢复');
+            render();
+          });
+        }
+        document.getElementById('copy').addEventListener('click', async () => {
+          const text = item.question + '\n\n' + item.answer + (item.code ? '\n\n' + item.code : '');
+          try {
+            await navigator.clipboard.writeText(text);
+            App.toast('已复制');
+          } catch {
+            App.toast('复制失败，请长按选择');
+          }
+        });
+      }
+
+      render();
+    })();
+  </script>
+</body>
+</html>

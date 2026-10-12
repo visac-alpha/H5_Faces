@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>控件详情 · H5_Faces</title>
+  <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <script src="../js/store.js"></script>
+  <script src="../js/common.js"></script>
+  <script src="../widgets/catalog.js"></script>
+  <script src="../widgets/render.js"></script>
+  <script>
+    (function () {
+      try {
+        const raw = App.qs().get('platform');
+        if (raw) App.setPlatform(raw);
+        const p = App.getPlatform();
+        const id = App.qs().get('id') || '';
+        App.applyAccent(p);
+
+        const list =
+          window.WIDGETS && Array.isArray(window.WIDGETS[p]) ? window.WIDGETS[p] : [];
+        const item = list.find((w) => w.id === id);
+        const back = 'widgets.html?platform=' + encodeURIComponent(p);
+
+        if (!item) {
+          document.getElementById('app').innerHTML = `
+            ${App.topbar('未找到控件', back)}
+            <main class="main"><div class="empty">控件不存在（${App.esc(p)} / ${App.esc(id)}）</div>
+            <p class="stat">可用：${App.esc(list.map((x) => x.id).join(', ') || '无')}</p></main>
+            ${App.renderTabbar(p, '../')}
+          `;
+          return;
+        }
+
+        document.getElementById('app').innerHTML = `
+          ${App.topbar(item.title, back, item.subtitle)}
+          <main class="main">
+            <div class="meta">
+              <span class="pill">${App.esc(App.LABELS[p])}</span>
+              <span class="pill">${App.esc(item.category)}</span>
+              <span class="pill">${App.esc(item.language)}</span>
+            </div>
+            <section class="w-card">
+              <h3>UI 示例</h3>
+              <p class="desc">${App.esc(item.usage || '')}</p>
+              <div class="demo-box" id="demo"></div>
+            </section>
+            <section class="w-card">
+              <h3>代码（${App.esc(item.language)}）</h3>
+              <pre class="demo-code" id="code"></pre>
+              <div class="actions" style="margin-top:10px">
+                <button type="button" class="btn ghost" id="copy">复制代码</button>
+              </div>
+            </section>
+          </main>
+          ${App.renderTabbar(p, '../')}
+        `;
+
+        document.getElementById('code').textContent = item.code || '';
+        WidgetUI.mountDemo(document.getElementById('demo'), item, p);
+
+        document.getElementById('copy').onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(item.code || '');
+            App.toast('已复制');
+          } catch {
+            App.toast('复制失败');
+          }
+        };
+      } catch (err) {
+        document.getElementById('app').innerHTML =
+          '<main class="main"><div class="empty">详情加载失败</div><pre class="demo-code" style="white-space:pre-wrap">' +
+          String(err && err.stack ? err.stack : err) +
+          '</pre></main>';
+      }
+    })();
+  </script>
+</body>
+</html>
