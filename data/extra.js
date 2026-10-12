@@ -1076,6 +1076,185 @@ window.EXTRA = {
         code: '',
         kind: 'interview',
       },
+      {
+        category: 'Objective-C',
+        question: '@property 常用修饰符 strong / weak / copy / assign / nonatomic 怎么选？',
+        answer:
+          'strong：持有对象，引用计数 +1（默认对象类型）。\n' +
+          'weak：不持有，对象释放后自动置 nil，破循环引用、delegate 常用。\n' +
+          'copy：生成不可变副本；NSString / NSArray / block 属性常用，防外部可变对象悄悄改。\n' +
+          'assign：用于基本类型（NSInteger、CGFloat）；对象上用 assign 释放后成野指针，慎用。\n' +
+          'atomic（默认）自旋保护 setter/getter，但不能保证线程安全业务；UI 属性多用 nonatomic 性能更好。',
+        code:
+          '@property (nonatomic, strong) NSArray *items;\n' +
+          '@property (nonatomic, copy) NSString *name;\n' +
+          '@property (nonatomic, weak) id<MyDelegate> delegate;',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: '为什么 NSString / Block 属性常用 copy？',
+        answer:
+          'NSString：外部可能传入 NSMutableString，用 strong 会共享同一可变对象，外部改你也被改；copy 得到不可变快照。\n' +
+          'Block：block 最初可能在栈上，copy 会把它拷到堆上，属性才能安全持有，否则离开作用域变野。\n' +
+          'MRC 下 block 属性必须 copy；ARC 下对 block 写 strong 编译器常会按 copy 处理，但面试仍建议显式 copy。',
+        code: '@property (nonatomic, copy) void (^completion)(BOOL ok);',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'ARC 和 MRC 区别？什么情况还要管内存？',
+        answer:
+          'MRC：手动 retain / release / autorelease。\n' +
+          'ARC：编译器插入保留/释放，仍遵守引用计数规则。\n' +
+          'ARC 下仍要处理：循环引用（block/delegate）、CF 对象与桥接（__bridge / CFBridgingRelease）、Core Foundation、部分 C API。\n' +
+          '不能对 ARC 对象直接调用 retain/release；不能用 NSAllocateObject 等。',
+        code: '__weak typeof(self) weakSelf = self;\nself.completion = ^{ __strong typeof(weakSelf) self = weakSelf; /* ... */ };',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'Category 和 Class Extension（匿名分类）区别？',
+        answer:
+          'Category：可拆分实现、给系统类加方法；一般不能加成员变量（runtime 关联对象可绕过）；加载时合并方法列表。\n' +
+          'Class Extension：写在 .m 里的匿名 @interface，可声明私有属性/方法，编译期可见，常用来藏实现细节。\n' +
+          '同名方法：Category 会覆盖类原方法（不确定多个 Category 谁赢），Extension 更像类的一部分。',
+        code:
+          '// Category\n@interface UIView (Frame)\n- (void)setX:(CGFloat)x;\n@end\n\n' +
+          '// Extension（.m）\n@interface MyVC ()\n@property (nonatomic, strong) UILabel *titleLabel;\n@end',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'OC 消息发送流程？找不到方法时消息转发怎么走？',
+        answer:
+          'objc_msgSend：按 isa 找到类 → 缓存 → 方法列表 → 父类链。\n' +
+          '找不到则动态方法解析：+resolveInstanceMethod: / +resolveClassMethod:（可动态加实现）。\n' +
+          '再转发：-forwardingTargetForSelector:（快速转给别的对象）。\n' +
+          '完整转发：-methodSignatureForSelector: → -forwardInvocation:。\n' +
+          '仍失败：doesNotRecognizeSelector: 崩溃。',
+        code: '',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'Runtime 能干什么？Method Swizzling 要注意什么？',
+        answer:
+          'Runtime：关联对象、动态添加方法/属性、遍历 ivar/method、消息转发、isa-swizzling（KVO）等。\n' +
+          'Swizzling：交换两个方法 IMP，常用于 hook 生命周期、埋点。\n' +
+          '注意：+load 里做且只做一次；用 dispatch_once；调用原实现防递归；考虑继承链与系统升级兼容；能不用尽量少用。',
+        code:
+          'Method a = class_getInstanceMethod(cls, @selector(viewDidLoad));\n' +
+          'Method b = class_getInstanceMethod(cls, @selector(my_viewDidLoad));\n' +
+          'method_exchangeImplementations(a, b);',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'KVO 原理是什么？如何正确使用与取消？',
+        answer:
+          '对对象添加观察时，Runtime 动态创建子类 NSKVONotifying_XXX，改 isa 指向它，重写 setter，调用 will/didChangeValueForKey。\n' +
+          '回调：observeValueForKeyPath:ofObject:change:context:。\n' +
+          '必须成对 removeObserver；对象释放前取消，否则易崩。\n' +
+          'iOS 11+ 可用带 NSKeyValueObservation 的 block API，生命周期更好管。\n' +
+          '自动 KVO 依赖 KVC 合规 setter；手动可调 will/didChange。',
+        code: '[obj addObserver:self forKeyPath:@"name" options:NSKeyValueObservingOptionNew context:NULL];',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'KVC 是什么？valueForKey / setValue:forKey: 注意点？',
+        answer:
+          'Key-Value Coding：用字符串访问属性，不直接调 getter/setter。\n' +
+          '查找顺序：get<Key> / <key> / is<Key> / _<key> 等；集合有特殊访问器。\n' +
+          '键错会抛 NSUnknownKeyException（可重写 setValue:forUndefinedKey:）。\n' +
+          '可访问私有成员（破坏封装）；字典转模型、Runtime 常用。\n' +
+          'nil 赋给非对象标量要小心（NSNumber 包装）。',
+        code: '[user setValue:@"Tom" forKey:@"name"];\nid n = [user valueForKey:@"name"];',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'Block 循环引用怎么产生？__weak / __strong / __block 区别？',
+        answer:
+          '对象强持有 block，block 又捕获并强持有对象 → 环。常见：self.block = ^{ [self do]; }。\n' +
+          '__weak：弱引用打破环；block 内再用 __strong 临时持有，避免执行中途 self 变 nil。\n' +
+          '__block：允许在 block 内修改外部变量；对对象在 MRC 下不 retain，ARC 下仍可能强引用，破环仍优先 __weak。',
+        code:
+          '__weak typeof(self) weakSelf = self;\n' +
+          'self.task = ^{\n  __strong typeof(weakSelf) self = weakSelf;\n  if (!self) return;\n  [self refresh];\n};',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: '+load 和 +initialize 有什么区别？',
+        answer:
+          '+load：镜像加载进运行时就调，主类先于 Category；每个实现都会调（含 Category 的 +load）。\n' +
+          '+initialize：类第一次收到消息前惰性调用；运行时保证线程安全；Category 的 +initialize 会覆盖主类（只留一个）。\n' +
+          '不要在 +load 做重活；Swizzling 常放 +load。\n' +
+          '+initialize 可能被子类触发时父类也调一次，注意判断 self == [MyClass class]。',
+        code: '',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'isEqual: 和 hash 为什么要一起重写？',
+        answer:
+          '放入 NSSet / NSDictionary 键时，先比 hash 再比 isEqual。\n' +
+          '约定：isEqual 为 YES 则 hash 必须相同；hash 相同不一定 equal。\n' +
+          '只重写其中一个会导致集合行为错乱（找不到、重复插入）。\n' +
+          'hash 应尽量稳定且分布均匀；可变对象作键时 hash 被改会丢对象。',
+        code:
+          '- (BOOL)isEqual:(id)other {\n  if (self == other) return YES;\n  if (![other isKindOfClass:self.class]) return NO;\n  return [self.uid isEqual:((MyModel *)other).uid];\n}\n' +
+          '- (NSUInteger)hash { return self.uid.hash; }',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'AutoreleasePool 有什么用？什么时候需要 @autoreleasepool？',
+        answer:
+          '对象发 autorelease 后不立刻释放，而是登记到当前池，池 drain 时统一 release。\n' +
+          '主线程 RunLoop 每圈有池；子线程、紧循环大量临时对象时要自己包 @autoreleasepool，否则峰值内存飙高。\n' +
+          '典型：大循环读图/解析、后台线程处理。',
+        code:
+          'for (NSInteger i = 0; i < 10000; i++) {\n  @autoreleasepool {\n    UIImage *img = [UIImage imageWithContentsOfFile:paths[i]];\n    // 用完即释放临时对象\n  }\n}',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'delegate 为什么常用 weak？和 notification / block 回调怎么选？',
+        answer:
+          'delegate 若 strong，易和委托方互相持有形成环；weak（或 assign 在 MRC）是惯例。\n' +
+          'delegate：1 对 1、方法清晰、适合 UI 事件协议。\n' +
+          'notification：1 对多、解耦，但难追踪、易漏 remove。\n' +
+          'block：闭包方便，注意循环引用与可读性；复杂多方法仍偏向 protocol。',
+        code: '@property (nonatomic, weak) id<UITableViewDelegate> delegate;',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: '关联对象（Associated Objects）怎么用？和成员变量比？',
+        answer:
+          'runtime 的 objc_setAssociatedObject / objc_getAssociatedObject，可给已有类（含 Category）挂额外数据。\n' +
+          '策略：ASSIGN / RETAIN / COPY，以及 nonatomic 变体。\n' +
+          '对象释放时关联对象一并清理（按策略）。\n' +
+          '不能替代真正 ivar 的性能与清晰度；Category 加「属性」常用它做存储。',
+        code:
+          'objc_setAssociatedObject(self, @selector(extra), obj, OBJC_ASSOCIATION_RETAIN_NONATOMIC);\n' +
+          'id obj = objc_getAssociatedObject(self, @selector(extra));',
+        kind: 'interview',
+      },
+      {
+        category: 'Objective-C',
+        question: 'OC 里 id、instancetype、NSObject * 有什么区别？',
+        answer:
+          'id：任意对象指针，编译期几乎不检查方法是否存在（可写任意消息，错了运行时才爆）。\n' +
+          'NSObject *：至少是 NSObject 子类，只能看到 NSObject 接口（除非强转）。\n' +
+          'instancetype：构造方法返回类型，编译器推断为当前类，比 id 更安全（如 [[MyVC alloc] init] 链式类型正确）。\n' +
+          '自定义 init / 便利构造器返回值优先写 instancetype。',
+        code: '- (instancetype)initWithName:(NSString *)name;',
+        kind: 'interview',
+      },
     ],
   },
 };

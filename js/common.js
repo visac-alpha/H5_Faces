@@ -5,7 +5,7 @@
   const CHIPS = {
     flutter: ['Dart', 'Widget', '状态管理', '性能'],
     web: ['HTML/CSS', 'JavaScript', '浏览器', '工程化'],
-    ios: ['Swift', 'UIKit', 'SwiftUI', '生命周期'],
+    ios: ['Swift', 'UIKit', 'Objective-C', 'Runtime'],
   };
 
   function qs() {
