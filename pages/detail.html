@@ -45,7 +45,7 @@
               <span class="pill">${item.kind === 'knowledge' ? '知识点' : '面试题'}</span>
               <span class="pill">${App.esc(App.LABELS[p])}</span>
             </div>
-            <div class="answer">${App.esc(item.answer)}</div>
+            ${App.formatAnswer(item.answer)}
             ${item.code ? `<pre class="code">${App.esc(item.code)}</pre>` : ''}
             <div class="actions">
               ${

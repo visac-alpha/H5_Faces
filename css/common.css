@@ -131,6 +131,55 @@ button { border: 0; background: none; color: inherit; cursor: pointer; }
 .answer {
   background: var(--card); border: 1px solid var(--line); border-radius: 12px;
   padding: 14px; font-size: 14px; white-space: pre-wrap; word-break: break-word;
+  line-height: 1.55; color: #334155;
+}
+.answer.rich {
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 14px 14px;
+}
+.ans-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid #eef2f7;
+}
+.ans-sec:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+.ans-h {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent, #0f766e);
+  letter-spacing: 0.02em;
+}
+.ans-p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #334155;
+}
+.ans-k {
+  font-weight: 700;
+  color: #0f172a;
+  margin-right: 2px;
+}
+.ans-list {
+  margin: 2px 0 0;
+  padding: 0 0 0 1.15em;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ans-list li {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #334155;
 }
 .code, .demo-code {
   margin-top: 12px; background: #0f172a; color: #e2e8f0;

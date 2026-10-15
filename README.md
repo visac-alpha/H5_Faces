@@ -1,6 +1,6 @@
 # H5_Faces
 
-Flutter / H5 / iOS 面试题与知识点（纯静态 H5，多文件结构）。已去掉安卓。
+iOS / Flutter / H5 面试题与知识点（纯静态 H5，多文件结构）。已去掉安卓。
 
 ## 首页四条入口（固定顺序）
 
@@ -10,7 +10,7 @@ Flutter / H5 / iOS 面试题与知识点（纯静态 H5，多文件结构）。�
 4. **控件集合**（按端区分：Flutter Widget / H5 / iOS）  
    流程：控件列表（名称 + 缩略示意）→ 详情（UI 示例 + 代码）
 
-底部 Tab 切换：Flutter / H5 / iOS。
+底部 Tab 切换：iOS / Flutter / H5。
 
 ## 本地打开
 

@@ -1,6 +1,6 @@
 /** 公共：平台、渲染辅助、底部 Tab */
 (function (global) {
-  const PLATFORMS = ['flutter', 'web', 'ios'];
+  const PLATFORMS = ['ios', 'flutter', 'web'];
   const LABELS = { flutter: 'Flutter', web: 'H5', ios: 'iOS' };
   const CHIPS = {
     flutter: ['Dart', 'Widget', '状态管理', '性能'],
@@ -29,12 +29,12 @@
   }
 
   function getPlatform() {
-    const raw = qs().get('platform') || storageGet('h5_faces_platform') || 'flutter';
-    return PLATFORMS.includes(raw) ? raw : 'flutter';
+    const raw = qs().get('platform') || storageGet('h5_faces_platform') || 'ios';
+    return PLATFORMS.includes(raw) ? raw : 'ios';
   }
 
   function setPlatform(p) {
-    const key = PLATFORMS.includes(p) ? p : 'flutter';
+    const key = PLATFORMS.includes(p) ? p : 'ios';
     storageSet('h5_faces_platform', key);
   }
 
@@ -59,6 +59,75 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  /** 把带【小节标题】的答法渲染成可读层次（纯文本仍可复制） */
+  function formatAnswer(text) {
+    const raw = String(text == null ? '' : text).replace(/\r\n/g, '\n').trim();
+    if (!raw) return '';
+    const lines = raw.split('\n');
+    const parts = [];
+    let buf = [];
+    let inSection = false;
+
+    function flushBuf() {
+      if (!buf.length) return;
+      const block = [];
+      let list = null;
+      const closeList = () => {
+        if (list) {
+          block.push(`<ul class="ans-list">${list.join('')}</ul>`);
+          list = null;
+        }
+      };
+      for (const line of buf) {
+        const t = line.trimEnd();
+        if (!t.trim()) {
+          closeList();
+          continue;
+        }
+        const m = t.match(/^\s*(?:[-•*]|\d+[.)、])\s+(.+)$/);
+        if (m) {
+          if (!list) list = [];
+          list.push(`<li>${esc(m[1])}</li>`);
+          continue;
+        }
+        closeList();
+        // 「标签：内容」行，标签加粗
+        const kv = t.match(/^([^：:]{1,16})([：:])\s*(.+)$/);
+        if (kv && !/^(http|https)$/i.test(kv[1])) {
+          block.push(
+            `<p class="ans-p"><span class="ans-k">${esc(kv[1] + kv[2])}</span>${esc(kv[3])}</p>`
+          );
+        } else {
+          block.push(`<p class="ans-p">${esc(t)}</p>`);
+        }
+      }
+      closeList();
+      parts.push(block.join(''));
+      buf = [];
+    }
+
+    for (const line of lines) {
+      const heading = line.trim().match(/^【([^】]+)】$/);
+      if (heading) {
+        flushBuf();
+        if (inSection) parts.push('</section>');
+        parts.push(
+          `<section class="ans-sec"><h3 class="ans-h">${esc(heading[1])}</h3>`
+        );
+        inSection = true;
+        continue;
+      }
+      buf.push(line);
+    }
+    flushBuf();
+    if (inSection) parts.push('</section>');
+    // 无任何【标题】时，整段仍按段落渲染
+    if (!inSection && parts.length === 1) {
+      return `<div class="answer rich">${parts[0]}</div>`;
+    }
+    return `<div class="answer rich">${parts.join('')}</div>`;
   }
 
   function toast(msg) {
@@ -97,9 +166,9 @@
   function renderTabbar(activePlatform, basePrefix) {
     const base = basePrefix || '';
     const tabs = [
+      { id: 'ios', label: 'iOS', ico: '📱' },
       { id: 'flutter', label: 'Flutter', ico: '💙' },
       { id: 'web', label: 'H5', ico: '🌐' },
-      { id: 'ios', label: 'iOS', ico: '📱' },
     ];
     return `<nav class="tabbar">${tabs
       .map(
@@ -161,6 +230,7 @@
     ensureCatalog,
     platformData,
     esc,
+    formatAnswer,
     toast,
     applyAccent,
     renderTabbar,
