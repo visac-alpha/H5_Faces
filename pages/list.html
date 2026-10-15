@@ -56,7 +56,7 @@
         } else {
           cats.forEach((cat, idx) => {
             const key = cat;
-            const isOpen = openCats[key] ?? idx === 0;
+            const isOpen = openCats[key] ?? false;
             const items = grouped.get(cat);
             body += `<div class="cat ${isOpen ? 'open' : ''}">
               <button class="cat-h" type="button" data-cat="${App.esc(key)}">
